@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger Form</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        #passenger-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        #passenger-form label {
+            font-weight: bold;
+        }
+        #passenger-form .form-group {
+            margin-bottom: 15px;
+        }
+        #passenger-list {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table thead {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+        table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .actions button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Passenger Form</h1>
+        <form id="passenger-form">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="serial">Serial</label>
+                    <input type="text" class="form-control" id="serial" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="flight-number">Flight Number</label>
+                    <input type="text" class="form-control" id="flight-number" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="date-time">Date & Time</label>
+                    <input type="datetime-local" class="form-control" id="date-time" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="bida-letter">Bida Letter</label>
+                    <input type="text" class="form-control" id="bida-letter" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="protocol">Protocol Officer</label>
+                    <input type="text" class="form-control" id="protocol" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="journey-type">Journey Type</label>
+                    <select class="form-control" id="journey-type" required>
+                        <option value="arrival">Arrival</option>
+                        <option value="departure">Departure</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="remarks">Remarks</label>
+                    <input type="text" class="form-control" id="remarks" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Passenger</button>
+            <button type="button" class="btn btn-success" id="generate-pdf">Generate PDF</button>
+        </form>
+
+        <table class="table table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Serial</th>
+                    <th>Name</th>
+                    <th>Flight Number</th>
+                    <th>Date & Time</th>
+                    <th>Bida Letter</th>
+                    <th>Protocol Officer</th>
+                    <th>Journey Type</th>
+                    <th>Remarks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="passenger-list">
+                <!-- Rows will be added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Include jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.22/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('passenger-form');
+            const passengerList = document.getElementById('passenger-list');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Get form values
+                const serial = document.getElementById('serial').value;
+                const name = document.getElementById('name').value;
+                const flightNumber = document.getElementById('flight-number').value;
+                const dateTime = document.getElementById('date-time').value;
+                const bidaLetter = document.getElementById('bida-letter').value;
+                const protocol  = document.getElementById('protocol').value;
+                const remarks =  document.getElementById('remarks').value;
+                const journeyType = document.getElementById('journey-type').value;
+
+                // Validate form values
+                if (!serial || !name || !flightNumber || !dateTime || !bidaLetter || !protocol || !journeyType || !remarks) {
+                    alert('Please fill in all fields.');
+                    return;
+                }
+
+                // Create a new row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${serial}</td>
+                    <td>${name}</td>
+                    <td>${flightNumber}</td>
+                    <td>${dateTime}</td>
+                    <td>${bidaLetter}</td>
+                    <td>${protocol}</td>
+                    <td>${journeyType}</td>
+                    <td>${remarks}</td>
+                    <td class="actions">
+                        <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                    </td>
+                `;
+
+                // Append the new row to the table body
+                passengerList.appendChild(row);
+
+                // Clear form fields
+                form.reset();
+            });
+
+            window.deleteRow = function(button) {
+                // Remove the row from the table
+                button.closest('tr').remove();
+            };
+
+            // Function to generate PDF from table data
+            document.getElementById('generate-pdf').addEventListener('click', function() {
+                const { jsPDF } = window.jspdf;
+
+                // Create a new PDF document
+                const doc = new jsPDF();
+
+                // Add a title to the PDF
+                doc.text('Passenger List', 10, 10);
+
+                // Prepare the table data
+                const headers = ['Serial', 'Name', 'Flight Number', 'Date & Time', 'Bida Letter','Protocol','Journey Type','Remarks' ,];
+                const tableData = [];
+
+                // Get the table rows from the DOM
+                const rows = document.querySelectorAll('#passenger-list tr');
+                rows.forEach(row => {
+                    const rowData = [];
+                    row.querySelectorAll('td:not(.actions)').forEach(cell => {
+                        rowData.push(cell.textContent);
+                    });
+                    tableData.push(rowData);
+                });
+
+                // Add the table to the PDF
+                doc.autoTable({
+                    head: [headers],
+                    body: tableData,
+                    startY: 20
+                });
+
+                // Save the PDF
+                doc.save('passenger_list.pdf');
+            });
+        });
+    </script>
+</body>
+</html>
